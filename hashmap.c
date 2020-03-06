@@ -2,9 +2,13 @@
 
 hash_t hashmap_init() {
     hash_t hash;
+    int i;
 
     hash = malloc(CAPACITY * sizeof *hash);
-    memset(hash, 0, CAPACITY * sizeof *hash);
+    
+    for (i = 0; i < CAPACITY; ++i) {
+        hash[i] = init_list();
+    }
 
     return hash;
 }
@@ -22,50 +26,58 @@ unsigned long hash_code(const char* key) {
 void hashmap_insert(hash_t hash, const char* key,
                     const char* value, size_t key_len, size_t value_len) {
 
-    unsigned long key_hash = hash_code(key);
-
-    hash[key_hash].key_len = key_len;
-    hash[key_hash].value_len = value_len;
-    hash[key_hash].in_use = 1;
-
-    hash[key_hash].key = malloc(key_len * sizeof *key);
-    hash[key_hash].value = malloc(value_len * sizeof *value);
-
-    memcpy(hash[key_hash].key, key, key_len);
-    memcpy(hash[key_hash].value, value, value_len);
+    push_front(hash[hash_code(key)], key, value, key_len, value_len);
 }
 
 char* get_value(hash_t hash, const char* key) {
     entry_t entry;
-    entry = hash[hash_code(key)];
+    unsigned long idx = hash_code(key);
 
-    return (entry.in_use) ? entry.value : NULL;
+    if (!hash[idx]->in_use) {
+        return NULL;
+    }
+
+    entry = hash[idx]->front;
+
+    while(entry != NULL && strncmp(entry->key, key, entry->key_len)) {
+        entry = entry->next;
+    }
+
+    return entry->value;
 }
 
 char* get_key(hash_t hash, const char* value) {
+    entry_t entry;
     int i;
 
     for (i = 0; i < CAPACITY; ++i) {
-        /* Must be a better way */
-        if (!hash[i].in_use) {
+        if (!hash[i]->in_use) {
             continue;
         }
 
-        if (!strcmp(hash[i].value, value)) {
-            return hash[i].key;
+        entry = hash[i]->front;
+        while (entry != NULL && strncmp(entry->value, value, entry->value_len)) {
+            entry = entry->next;
+        }
+
+        if(entry != NULL) {
+            return entry->key;
         }
     }
     return NULL;
 }
 
-void hashmap_remove(hash_t hash, const char* key) {
+void erase_entry(hash_t hash, const char* key, const char* value) {
     unsigned long idx = hash_code(key);
 
-    if (!hash[idx].in_use) {
-        return;
-    }
-    hash[idx].in_use = 0;
+    remove_node(hash[idx], key, value);
+}
 
-    free(hash[idx].key);
-    free(hash[idx].value);
+void destroy_hash(hash_t hash) {
+    int i;
+
+    for (i = 0; i < CAPACITY; ++i) {
+        destroy(hash[i]);
+    }
+    free(hash);
 }

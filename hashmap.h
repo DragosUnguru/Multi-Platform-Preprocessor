@@ -4,16 +4,8 @@
 
 #include "list.h"
 
-struct entry {
-    char* key;
-    char* value;
-    size_t key_len;
-    size_t value_len;
-    char in_use;
-};
-
-typedef struct entry entry_t;
-typedef struct entry* hash_t;
+typedef struct node* entry_t;
+typedef struct list_head** hash_t;
 
 #define CAPACITY            12289
 
@@ -52,6 +44,11 @@ char* get_key(hash_t hash, const char* value);
 
 /*
  * Removes and frees the entry found in the
- * hash table at the given key
+ * hash table matching the (key, value) pair
 */
-void hashmap_remove(hash_t hash, const char* key);
+void erase_entry(hash_t hash, const char* key, const char* value);
+
+/*
+ * Frees all the memory used by 'hash'
+*/
+void destroy_hash(hash_t hash);

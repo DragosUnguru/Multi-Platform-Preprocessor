@@ -15,10 +15,16 @@ int main() {
     hashmap_insert(hashmap, "key8", "value8", 4, 6);
     hashmap_insert(hashmap, "key9", "value9", 4, 6);
 
-    hashmap_remove(hashmap, "key1");
+    erase_entry(hashmap, "key5", "value5");
+    hashmap_insert(hashmap, "key5", "value5", 4, 6);
+    hashmap_insert(hashmap, "key5", "cacaca", 4, 6);
+    hashmap_insert(hashmap, "key5", "cacaba", 4, 6);
+
 
     printf("%s", get_value(hashmap, "key5"));
-    printf("%s", get_key(hashmap, "value9"));
+    printf("%s", get_key(hashmap, "cacaca"));
+
+    destroy_hash(hashmap);
 
     return 0;
 }
