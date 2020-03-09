@@ -1,30 +1,40 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "hashmap.h"
-int main() {
+#include "utils.h"
 
-    hash_t hashmap = hashmap_init();
-    hashmap_insert(hashmap, "key1", "value1", 4, 6);
-    hashmap_insert(hashmap, "key2", "value2", 4, 6);
-    hashmap_insert(hashmap, "key3", "value3", 4, 6);
-    hashmap_insert(hashmap, "key4", "value4", 4, 6);
-    hashmap_insert(hashmap, "key5", "value5", 4, 6);
-    hashmap_insert(hashmap, "key6", "value6", 4, 6);
-    hashmap_insert(hashmap, "key7", "value7", 4, 6);
-    hashmap_insert(hashmap, "key8", "value8", 4, 6);
-    hashmap_insert(hashmap, "key9", "value9", 4, 6);
+int main(int argc, char* argv[]) {
+    unsigned int i;
+    size_t no_header_dirs;
+    char** header_dirs;
+    hash_t defines;
+    FILE* fin;
+    FILE* fout;
 
-    erase_entry(hashmap, "key5", "value5");
-    hashmap_insert(hashmap, "key5", "value5", 4, 6);
-    hashmap_insert(hashmap, "key5", "cacaca", 4, 6);
-    hashmap_insert(hashmap, "key5", "cacaba", 4, 6);
+    /* Parse input from command line */
+    fin = NULL;
+    fout = NULL;
+    no_header_dirs = count_include_dirs(argc, argv);
+    header_dirs = malloc(no_header_dirs * sizeof *header_dirs);
 
+    defines = hashmap_init();
 
-    printf("%s", get_value(hashmap, "key5"));
-    printf("%s", get_key(hashmap, "cacaca"));
+    /* Solve homework, pula mea */
 
-    destroy_hash(hashmap);
+    parse_input(argc, argv, defines, header_dirs, fin, fout);
+    printf("\n\n%s\n%s\n", get_value(defines, "asdf"), get_value(defines, "altceva"));
+
+    for (i = 0; i < no_header_dirs; ++i) {
+        printf("%s\n", header_dirs[i]);
+    }
+
+    /* Free everything */
+    destroy_hash(defines);
+
+    for (i = 0; i < no_header_dirs; ++i) {
+        free(header_dirs[i]);
+    }
+    free(header_dirs);
 
     return 0;
 }

@@ -5,9 +5,11 @@ CFLAGS = -Wall -Wextra -g -std=c89
 
 all: so-cpp
 
-so-cpp: so-cpp.o hashmap.o list.o
+so-cpp: so-cpp.o utils.o hashmap.o list.o
 
 so-cpp.o: so-cpp.c
+
+utils.o: utils.c utils.h
 
 hashmap.o: hashmap.c hashmap.h
 

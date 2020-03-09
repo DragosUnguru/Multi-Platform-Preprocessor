@@ -5,6 +5,7 @@ hash_t hashmap_init() {
     int i;
 
     hash = malloc(CAPACITY * sizeof *hash);
+    DIE(hash == NULL, "Malloc failed");
     
     for (i = 0; i < CAPACITY; ++i) {
         hash[i] = init_list();
@@ -23,10 +24,9 @@ unsigned long hash_code(const char* key) {
     return code % CAPACITY;
 }
 
-void hashmap_insert(hash_t hash, const char* key,
-                    const char* value, size_t key_len, size_t value_len) {
+void hashmap_insert(hash_t hash, const char* key, const char* value) {
 
-    push_front(hash[hash_code(key)], key, value, key_len, value_len);
+    push_front(hash[hash_code(key)], key, value);
 }
 
 char* get_value(hash_t hash, const char* key) {

@@ -6,6 +6,18 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define FAILURE 12
+
+#define DIE(assertion, call_description)	\
+	do {									\
+		if (assertion) {					\
+			fprintf(stderr, "(%s, %d): ",	\
+					__FILE__, __LINE__);	\
+			perror(call_description);		\
+			exit(FAILURE);      			\
+		}									\
+	} while(0)
+
 struct node {
     char* key;
     char* value;
@@ -29,12 +41,12 @@ struct list_head* init_list();
  * Pushes a new cell into the front of the list
  * and manages the new head of the list
 */
-void push_front(struct list_head* head, const char* key, const char* value, size_t key_len, size_t value_len);
+void push_front(struct list_head* head, const char* key, const char* value);
 
 /*
  * Pushes a new cell at the end of the list
 */
-void push_back(struct list_head* head, const char* key, const char* value, size_t key_len, size_t value_len);
+void push_back(struct list_head* head, const char* key, const char* value);
 
 /*
  * Erases the first element in the list

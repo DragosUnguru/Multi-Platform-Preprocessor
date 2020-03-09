@@ -1,29 +1,45 @@
 #include "list.h"
 
 struct list_head* init_list() {
-    struct list_head* head;
+    struct list_head* head = NULL;
 
     head = malloc(sizeof *head);
+    DIE(head == NULL, "Malloc failed");
+
     head->front = NULL;
     head->in_use = 0;
 
     return head;
 }
 
-void push_front(struct list_head* head, const char* key,
-                const char* value, size_t key_len, size_t value_len) {
+void push_front(struct list_head* head, const char* key, const char* value) {
     struct node* new_node;
+    size_t value_len, key_len;;
+
+    key_len = strlen(key);
+    value_len = (value == NULL) ? 0 : strlen(value);
 
     /* Manage new list entry */
     new_node = malloc(sizeof *new_node);
+    DIE(new_node == NULL, "Malloc failed");
+
     new_node->next = head->front;
-    new_node->key_len = key_len;
+    new_node->key_len = strlen(key);
     new_node->value_len = value_len;
 
     new_node->key = malloc(key_len * sizeof(*new_node->key));
-    new_node->value = malloc(value_len * sizeof(*new_node->value));
+    DIE(new_node->key == NULL, "Malloc failed");
+
     memcpy(new_node->key, key, key_len);
-    memcpy(new_node->value, value, value_len);
+
+    if (value != NULL) {
+        new_node->value = malloc(value_len * sizeof(*new_node->value));
+        DIE(new_node->value == NULL, "Malloc failed");
+
+        memcpy(new_node->value, value, value_len);
+    } else {
+        new_node->value = NULL;
+    }
 
     /* Signal that hash entry is in use if this is it's first entry */
     if (head->front == NULL) {
@@ -34,10 +50,13 @@ void push_front(struct list_head* head, const char* key,
     head->front = new_node;
 }
 
-void push_back(struct list_head* head, const char* key,
-                const char* value, size_t key_len, size_t value_len) {
+void push_back(struct list_head* head, const char* key, const char* value) {
     struct node* new_node;
     struct node* ptr;
+    size_t value_len, key_len;;
+
+    key_len = strlen(key);
+    value_len = (value == NULL) ? 0 : strlen(value);
 
     ptr = head->front;
 
@@ -47,7 +66,11 @@ void push_back(struct list_head* head, const char* key,
     new_node->value_len = value_len;
 
     new_node->key = malloc(key_len * sizeof(*new_node->key));
+    DIE(new_node->key == NULL, "Malloc failed");
+
     new_node->value = malloc(value_len * sizeof(*new_node->value));
+    DIE(new_node->value == NULL, "Malloc failed");
+
     memcpy(new_node->key, key, key_len);
     memcpy(new_node->value, value, value_len);
 
@@ -94,7 +117,8 @@ void remove_node(struct list_head* head, const char* key, const char* value) {
     pred = tmp;
     
     /* Search for desired entry */
-    while(tmp != NULL && strncmp(tmp->key, key, tmp->key_len) && strncmp(tmp->value, value, tmp->value_len)) {
+    while(tmp != NULL && strncmp(tmp->key, key, tmp->key_len) &&
+        strncmp(tmp->value, value, tmp->value_len)) {
         pred = tmp;
         tmp = tmp->next;
     }
