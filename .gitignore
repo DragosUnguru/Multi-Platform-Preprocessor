@@ -5,3 +5,6 @@ LICENSE
 .vscode
 *.in
 *out
+*.o
+output*
+input*
