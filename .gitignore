@@ -8,3 +8,5 @@ LICENSE
 *.o
 output*
 input*
+so-cpp
+*.out*
