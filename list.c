@@ -1,42 +1,44 @@
 #include "list.h"
 
-struct list_head* init_list() {
-    struct list_head* head = NULL;
+int init_list(struct list_head** head) {
+    *head = NULL;
 
-    head = malloc(sizeof *head);
-    DIE(head == NULL, "Malloc failed");
+    *head = malloc(sizeof **head);
+    DIE(*head == NULL, FAILURE);
 
-    head->front = NULL;
-    head->in_use = 0;
+    (*head)->front = NULL;
+    (*head)->in_use = 0;
 
-    return head;
+    return OK;
 }
 
-void push_front(struct list_head* head, const char* key, const char* value) {
+int push_front(struct list_head* head, const char* key, const char* value) {
     struct node* new_node;
-    size_t value_len, key_len;;
+    size_t value_len, key_len;
 
-    key_len = strlen(key);
-    value_len = (value == NULL) ? 0 : strlen(value);
+    key_len = strlen(key) + 1;
+    value_len = (value == NULL) ? 0 : strlen(value) + 1;
 
     /* Manage new list entry */
     new_node = malloc(sizeof *new_node);
-    DIE(new_node == NULL, "Malloc failed");
+    DIE(new_node == NULL, FAILURE);
 
     new_node->next = head->front;
     new_node->key_len = strlen(key);
     new_node->value_len = value_len;
 
     new_node->key = malloc(key_len * sizeof(*new_node->key));
-    DIE(new_node->key == NULL, "Malloc failed");
+    DIE(new_node->key == NULL, FAILURE);
 
     memcpy(new_node->key, key, key_len);
+    new_node->key[key_len - 1] = '\0';
 
     if (value != NULL) {
         new_node->value = malloc(value_len * sizeof(*new_node->value));
-        DIE(new_node->value == NULL, "Malloc failed");
+        DIE(new_node->value == NULL, FAILURE);
 
         memcpy(new_node->value, value, value_len);
+        new_node->value[value_len - 1] = '\0';
     } else {
         new_node->value = NULL;
     }
@@ -48,9 +50,11 @@ void push_front(struct list_head* head, const char* key, const char* value) {
 
     /* Push as first cell in the list */
     head->front = new_node;
+
+    return OK;
 }
 
-void push_back(struct list_head* head, const char* key, const char* value) {
+int push_back(struct list_head* head, const char* key, const char* value) {
     struct node* new_node;
     struct node* ptr;
     size_t value_len, key_len;;
@@ -62,14 +66,16 @@ void push_back(struct list_head* head, const char* key, const char* value) {
 
     /* Manage new list entry */
     new_node = malloc(sizeof *new_node);
+    DIE(new_node == NULL, FAILURE);
+
     new_node->key_len = key_len;
     new_node->value_len = value_len;
 
     new_node->key = malloc(key_len * sizeof(*new_node->key));
-    DIE(new_node->key == NULL, "Malloc failed");
+    DIE(new_node->key == NULL, FAILURE);
 
     new_node->value = malloc(value_len * sizeof(*new_node->value));
-    DIE(new_node->value == NULL, "Malloc failed");
+    DIE(new_node->value == NULL, FAILURE);
 
     memcpy(new_node->key, key, key_len);
     memcpy(new_node->value, value, value_len);
@@ -79,13 +85,15 @@ void push_back(struct list_head* head, const char* key, const char* value) {
         head->front = new_node;
         head->in_use = 1;
 
-        return;
+        return OK;
     }
 
     while (ptr->next != NULL) {
         ptr = ptr->next;
     }
     ptr->next = new_node;
+
+    return OK;
 }
 
 struct node* pop_head(struct list_head* head) {
@@ -105,7 +113,7 @@ struct node* pop_head(struct list_head* head) {
     return return_value;
 }
 
-void remove_node(struct list_head* head, const char* key, const char* value) {
+void remove_occurence(struct list_head* head, const char* key) {
     struct node* tmp;
     struct node* pred;
 
@@ -117,23 +125,30 @@ void remove_node(struct list_head* head, const char* key, const char* value) {
     pred = tmp;
     
     /* Search for desired entry */
-    while(tmp != NULL && strncmp(tmp->key, key, tmp->key_len) &&
-        strncmp(tmp->value, value, tmp->value_len)) {
+    while(tmp != NULL) {
+        if (!strncmp(tmp->key, key, tmp->key_len - 1)) {
+            if (head->front == tmp) {
+                head->front = tmp->next;
+
+                pred = pred->next;
+                free_node(tmp);
+
+                tmp = pred;
+                continue;
+            }
+
+            pred->next = tmp->next;
+            free_node(tmp);
+
+            tmp = pred->next;
+            continue;
+        }
         pred = tmp;
         tmp = tmp->next;
     }
 
-    /* If found, free it and manage list links */
-    if(tmp != NULL) {
-
-        /* If there's only this entry in the list */
-        if (pred == tmp) {
-            head->front = NULL;
-            head->in_use = 0;
-        }
-
-        pred = tmp->next;
-        free_node(tmp);
+    if (head->front == NULL) {
+        head->in_use = 0;
     }
 }
 

@@ -3,7 +3,7 @@
 homework
 LICENSE
 .vscode
-*.in
+*.in*
 *out
 *.o
 output*

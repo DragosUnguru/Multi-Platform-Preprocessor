@@ -9,7 +9,7 @@ typedef struct list_head** hash_t;
  * Allocates, initializes and returns
  * a newly created hashmap
 */
-hash_t hashmap_init();
+int hashmap_init(hash_t* hash);
 
 /*
  * Hash function. Returns an index
@@ -21,7 +21,13 @@ unsigned long hash_code(const char* key);
  * Inserts a new pair (key, value) into
  * the hashmap
 */
-void hashmap_insert(hash_t hash, const char* key, const char* value);
+int hashmap_insert(hash_t hash, const char* key, const char* value);
+
+/*
+ * Appends 'appending_string' at the end of the value
+ * found at 'hash's hashtable key
+*/
+int append_value(hash_t hash, const char* key, const char* appending_string);
 
 /*
  * Returns the value associated with the key
@@ -38,10 +44,10 @@ char* get_value(hash_t hash, const char* key);
 char* get_key(hash_t hash, const char* value);
 
 /*
- * Removes and frees the entry found in the
- * hash table matching the (key, value) pair
+ * Removes and frees every entry found in the
+ * hash table matching the given key
 */
-void erase_entry(hash_t hash, const char* key, const char* value);
+void erase_entry(hash_t hash, const char* key);
 
 /*
  * Frees all the memory used by 'hash'

@@ -1,18 +1,38 @@
 #include "hashmap.h"
 
-#define OK              0
-#define BAD             1
-#define MAX_LINE_LEN    80
+#define NO_SUCH_FILE    2
+#define BAD_ARG         7
+#define MAX_LINE_LEN    256
+#define MAX_WORD_LEN    64
 #define DEFINE_OFFSET   8
 
 #define DELIMS "\t[]{}<>=+-*/%!&|^.,:;() \n"
 
-#define PRINT(fout, format, elem) ((fout == NULL) ? printf(format, elem) : fprintf(fout, format, elem))
-#define PRINT2(fout, format, elem1, elem2) ((fout == NULL) ? printf(format, elem1, elem2) : fprintf(fout, format, elem1, elem2))
-
 
 enum arg_type {IN_FILE, OUT_FILE, INCLUDE_PATH, DEFINE, BAD_PARAM,
             STICHED_OUT_FILE, STICHED_INCLUDE_PATH, STICHED_DEFINE};
+
+
+/*
+ * Populates the 'defines' hashtable with entries
+ * found along the 'line' param. This manages
+ * nested defines and multi-line defines
+*/
+int parse_define(hash_t defines, char* line);
+
+/*
+ * Given a line and a hashtable of <symbol, mapping>
+ * it will replace all symbols found in the given line
+ * and replace them. Outputs the line at 'fout'
+*/
+int map_line(hash_t defines, char* line);
+
+/*
+ * Reads the input file line by line, hashing any symbols
+ * found, maps and replaces  all the defined symbols
+ * found while resolving #ifdefs and #ifndefs. 
+*/
+int map_defines(hash_t defines);
 
 /*
  * Given an argument from the command line,

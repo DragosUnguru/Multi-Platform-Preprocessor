@@ -7,15 +7,20 @@
 #include <string.h>
 
 #define FAILURE 12
+#define OK		0
 
-#define DIE(assertion, call_description)	\
-	do {									\
-		if (assertion) {					\
-			fprintf(stderr, "(%s, %d): ",	\
-					__FILE__, __LINE__);	\
-			perror(call_description);		\
-			exit(FAILURE);      			\
-		}									\
+#define DIE(assertion, ret_value)					\
+	do {											\
+		if (assertion) {							\
+			return(ret_value);      				\
+		}											\
+	} while(0)
+
+#define EXIT(assertion, exit_value)					\
+	do {											\
+		if (assertion) {							\
+			exit(exit_value);						\
+		}											\
 	} while(0)
 
 struct node {
@@ -35,18 +40,18 @@ struct list_head {
  * Initializes a new empty list head
  * and returns it
 */
-struct list_head* init_list();
+int init_list(struct list_head** head);
 
 /*
  * Pushes a new cell into the front of the list
  * and manages the new head of the list
 */
-void push_front(struct list_head* head, const char* key, const char* value);
+int push_front(struct list_head* head, const char* key, const char* value);
 
 /*
  * Pushes a new cell at the end of the list
 */
-void push_back(struct list_head* head, const char* key, const char* value);
+int push_back(struct list_head* head, const char* key, const char* value);
 
 /*
  * Erases the first element in the list
@@ -56,10 +61,10 @@ void push_back(struct list_head* head, const char* key, const char* value);
 struct node* pop_head(struct list_head* head);
 
 /*
- * Removes, if found, from the list the entry containing
- * the pair (key, value) given as parameters
+ * Removes, if found, from the list every entry containing
+ * that matches the given key
 */
-void remove_node(struct list_head*, const char* key, const char* value);
+void remove_occurence(struct list_head* head, const char* key);
 
 /*
  * Frees all the memory hoarded
