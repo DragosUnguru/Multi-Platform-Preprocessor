@@ -149,8 +149,8 @@ int evaluate_if(hash_t defines, char* cond_value) {
 int map_defines(hash_t defines) {
     char line[MAX_LINE_LEN];
     char* symbol;
-    char* mapping;
     char if_result = 0;
+    int is_mapped = 0;
     int ret, passed = 0;
 
     while(fgets(line, MAX_LINE_LEN, stdin) != NULL) {
@@ -171,7 +171,7 @@ int map_defines(hash_t defines) {
 
         if (!strncmp(line, "#ifndef ", 8)) {
             symbol = line + 7;
-            mapping = get_value(defines, symbol);
+            is_mapped = is_key_mapped(defines, symbol);
 
             /* Skip this line containing #ifndef.
              * This doesn't have to show in the final output
@@ -181,7 +181,7 @@ int map_defines(hash_t defines) {
             /* Evaluate if and manage the result
              * for a potential next 'else'
             */
-            if (mapping == NULL) {
+            if (!is_mapped) {
                 if_result = 1;
             } else {
                 if_result = 0;
@@ -191,14 +191,14 @@ int map_defines(hash_t defines) {
 
         if (!strncmp(line, "#ifdef ", 7)) {
             symbol = line + 7;
-            mapping = get_value(defines, symbol);
+            is_mapped = is_key_mapped(defines, symbol);
 
             fgets(line, MAX_LINE_LEN, stdin);
 
             /* Evaluate if and memorize it's value
              * for a potential next 'else'
-             GRIJA MAREEEE CU NULLUL ASTA LA GET VALUE AOLO*/
-            if (mapping != NULL) {
+            */
+            if (is_mapped) {
                 if_result = 1;
             } else {
                 if_result = 0;

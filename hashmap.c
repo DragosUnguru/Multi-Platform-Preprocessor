@@ -52,6 +52,23 @@ char* get_value(hash_t hash, const char* key) {
     return entry->value;
 }
 
+int is_key_mapped(hash_t hash, const char* key) {
+    entry_t entry;
+    unsigned long idx = hash_code(key);
+
+    if (!hash[idx]->in_use) {
+        return 0;
+    }
+
+    entry = hash[idx]->front;
+
+    while(entry != NULL && strncmp(entry->key, key, entry->key_len)) {
+        entry = entry->next;
+    }
+
+    return (entry == NULL) ? 0 : 1;
+}
+
 int append_value(hash_t hash, const char* key, const char* appending_string) {
     entry_t entry;
     size_t new_len;

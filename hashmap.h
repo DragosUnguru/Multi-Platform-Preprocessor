@@ -44,6 +44,12 @@ char* get_value(hash_t hash, const char* key);
 char* get_key(hash_t hash, const char* value);
 
 /*
+ * Returns 1 if the "key" is mapped in "hash",
+ * 0 otherwise
+*/
+int is_key_mapped(hash_t hash, const char* key);
+
+/*
  * Removes and frees every entry found in the
  * hash table matching the given key
 */
