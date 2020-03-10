@@ -3,3 +3,5 @@
 homework
 LICENSE
 .vscode
+*.in
+*out

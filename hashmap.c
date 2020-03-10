@@ -18,8 +18,9 @@ unsigned long hash_code(const char* key) {
     unsigned long code = 5381;
     int c;
 
-    while ((c = *key++))
+    while ((c = *key++)) {
         code = ((code << 5) + code) + c;
+    }
 
     return code % CAPACITY;
 }
@@ -32,6 +33,7 @@ void hashmap_insert(hash_t hash, const char* key, const char* value) {
 char* get_value(hash_t hash, const char* key) {
     entry_t entry;
     unsigned long idx = hash_code(key);
+    
 
     if (!hash[idx]->in_use) {
         return NULL;

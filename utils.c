@@ -1,6 +1,93 @@
 #include "utils.h"
 
+void map_defines(hash_t defines, FILE* fin, FILE* fout) {
+    char line[MAX_LINE_LEN];
+    char* end;
+    char* start;
+    char* mapping;
+    char between_quotations = 0;
+    char word[64];
+    char terminator;
+
+    while(fgets(line, MAX_LINE_LEN, fin) != NULL) {
+        /* Tokenize without losing delimitators:
+         * start = pointer to the starting address of the token
+         * end = pointer to the ending address of the token
+        */
+        start = line;
+        end = strpbrk(line, DELIMS);
+
+        /* Don't map the effective define */
+        if (!strncmp(line, "#define ", DEFINE_OFFSET)) {
+            fprintf(fout, "%s", line);
+            continue;
+        }
+
+        /* For every token in line */
+        while (end != NULL) {
+            terminator = '\0';
+
+            /* If we've got a match on a symbol, ignore it if it
+             * is hugged by quotation marks
+            */
+            if (end[0] == '\"') {
+                between_quotations = (between_quotations) ? 0 : 1;
+            }
+
+            /* Manage token */
+            memset(word, 0, 64);
+            memcpy(word, start, end - start + 1);
+
+            /* There might be a delim at the end of our token.
+             * Ignore it when searching for symbol
+            */
+            if (strchr(DELIMS, word[end - start])) {
+                terminator = word[end - start];
+                word[end - start] = '\0';
+            }
+
+            mapping = get_value(defines, word);
+            word[end - start] = terminator;
+
+            /* If we have a mapping for the found symbol,
+             * replace with it accordingly or simply print
+             * if not
+            */
+            if (mapping != NULL && !between_quotations) {
+                fprintf(fout, "%s%c", mapping, terminator);
+            } else {
+                fprintf(fout, "%s", word);
+            }
+
+            start = end + 1;
+            end = strpbrk(end + 1, DELIMS);
+        }
+    }
+}
+
+void process_defines(hash_t defines, FILE* fin, FILE* fout) {
+    char line[MAX_LINE_LEN];
+    char tmp[MAX_LINE_LEN];
+    char* symbol;
+    char* mapping;
+
+    while(fgets(line, MAX_LINE_LEN, fin) != NULL) {
+
+        if (!strncmp(line, "#define ", DEFINE_OFFSET)) {
+            memcpy(tmp, line, strlen(line));
+            symbol = strtok(tmp + DEFINE_OFFSET, " ");
+            mapping = strtok(NULL, "\n");
+
+            hashmap_insert(defines, symbol, mapping);
+        }
+    }
+
+    fseek(fin, 0, SEEK_SET);
+    map_defines(defines, fin, fout);
+}
+
 enum arg_type resolve_input_type(char* arg) {
+    static char input_exists = 0;
     enum arg_type result;
 
     if (arg[0] == '-') {
@@ -18,7 +105,8 @@ enum arg_type resolve_input_type(char* arg) {
             result = BAD_PARAM;
         }
     } else {
-        result = IN_FILE;
+        result = (input_exists) ? OUT_FILE : IN_FILE;
+        input_exists = 1;
     }
 
     /* Input argument is stiched together with effective value. eg: -I/some/dir */
@@ -45,7 +133,7 @@ size_t count_include_dirs(int argc, char* argv[]) {
     return result;
 }
 
-int parse_input(int argc, char* argv[], hash_t defines, char** header_paths, FILE* inf_ptr, FILE* outf_ptr) {
+int parse_input(int argc, char* argv[], hash_t defines, char** header_paths, FILE** inf_ptr, FILE** outf_ptr) {
     int i, header_idx = 0;
     size_t arg_len;
     char* arg_indicator;
@@ -55,8 +143,8 @@ int parse_input(int argc, char* argv[], hash_t defines, char** header_paths, FIL
     char* symbol;
     char* mapping;
 
-    inf_ptr = NULL;
-    outf_ptr = NULL;
+    *inf_ptr = NULL;
+    *outf_ptr = NULL;
 
     for (i = 1; i < argc; ++i) {
         arg_indicator = argv[i];
@@ -94,19 +182,19 @@ int parse_input(int argc, char* argv[], hash_t defines, char** header_paths, FIL
             memcpy(header_paths[header_idx++], arg_value, arg_len);
         }
         else if (type == IN_FILE) {
-            inf_ptr = fopen(arg_value, "r");
+            *inf_ptr = fopen(arg_value, "r");
         }
         else if (type == OUT_FILE) {
-            outf_ptr = fopen(arg_value, "w");
+            *outf_ptr = fopen(arg_value, "w");
         }
     }
 
-    if (inf_ptr == NULL) {
-        inf_ptr = stdin;
+    if (*inf_ptr == NULL) {
+        *inf_ptr = dup2(*inf_ptr, stdin);
     }
-    if (outf_ptr == NULL) {
-        outf_ptr = stdout;
-    }
+    if (*outf_ptr == NULL) {
+        *outf_ptr = dup2(*outf_ptr, stdout);
+    }    
 
     return OK;
 }
