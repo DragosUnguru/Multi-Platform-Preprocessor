@@ -13,10 +13,6 @@ int main(int argc, char* argv[]) {
     FILE* fout;
 
     /* Init structures */
-    no_header_dirs = count_include_dirs(argc, argv);
-
-    header_dirs = malloc(no_header_dirs * sizeof *header_dirs);
-    EXIT(header_dirs == NULL, FAILURE);
 
     ret = hashmap_init(&defines);
     EXIT(ret == FAILURE, FAILURE);
@@ -24,28 +20,26 @@ int main(int argc, char* argv[]) {
     fin = NULL;
     fout = NULL;
 
-    /* Solve homework, pula mea */
-
-    ret = parse_input(argc, argv, defines, header_dirs, &fin, &fout);
+    /* Execute */
+    ret = parse_input(argc, argv, defines, &header_dirs, &no_header_dirs, &fin, &fout);
     EXIT(ret != OK, ret);
 
-    ret = map_defines(defines);
-    EXIT(ret == FAILURE, FAILURE);
+    ret = process_file(defines, header_dirs, no_header_dirs);
+    EXIT(ret != OK, ret);
 
     /* Free everything */
     destroy_hash(defines);
 
-    for (i = 0; i < no_header_dirs; ++i) {
+    if (header_dirs[0] != NULL)
+        free(header_dirs[0]);
+    for (i = 1; i < no_header_dirs; ++i)
         free(header_dirs[i]);
-    }
     free(header_dirs);
 
-    if (fin != NULL) {
+    if (fin != NULL)
         fclose(fin);
-    }
-    if (fout != NULL) {
+    if (fout != NULL)
         fclose(fout);
-    }
 
     return OK;
 }
