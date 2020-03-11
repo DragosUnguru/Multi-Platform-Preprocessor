@@ -1,0 +1,12 @@
+OBJ_LIST = utils.obj list.obj hashmap.obj so-cpp.obj
+CFLAGS   = /MD
+
+EXE_NAME = so-cpp.exe
+
+all : $(EXE_NAME)
+
+so-cpp.exe : $(OBJ_LIST)
+  $(CPP) $(CFLAGS) /Fe$@ $**
+
+clean :
+  del *.obj $(EXE_NAME)
