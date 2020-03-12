@@ -1,0 +1,60 @@
+        # Unguru Dragos-Gabriel, 336CC
+
+            MULTI-PLATFORM DEVELOPMENT
+
+    # BRIEF INTRODUCTION
+
+    This project emulates the job done by the
+compiler in the preprocessing phase.
+
+    This includes:
+        -> Mapping defines to their value
+            -> Including multi-line defines
+            -> Nested defines
+            -> #undef
+        -> Includes
+            -> Include guards in header files
+        -> Preprocessor logic
+            -> #ifdef / #ifndef / #if / #else / #elif / #endif
+
+    Running the program: ./so-cpp [-D <SYMBOL>[=<MAPPING>]] [-I <DIR>] [<INFILE>] [ [-o] <OUTFILE>]
+            (Every argument hugged by "[]" means that it is optional)
+
+    # IMPLEMENTATION DETAILS
+
+    The data strucure used to memorize the <SYMBOL, MAPPING> pair
+is a hashtable implemented using singly linked lists. The hashing function
+used is djb2 by Dan Bernstein[1] as it gives really good results (close to 0
+collisions).
+
+    The redirecting of the input and output stream is accomplished via
+'freopen'. In the case of missing the input / output file, the program
+will use the standard input / output (stdin / stdout).
+
+    The ideea behind the project is that it follows a cascading solving
+logic. The execution pipe of the program can be broken down in steps:
+
+    The program reads the input file line by line and searches for keywords
+such as "#define", "#ifdef", "#include" etc..
+
+    In the case of a #define, simply map the values and move on.
+
+    For the #unmap, remove the entry from the hashtable.
+
+    For conditional statements, simply evaluate the truth value and
+decide if the following block will make it to the output file.
+
+    ! Ifs and elifs have the exact same behaviour (for some reason).
+So if the if statement was evaluated to true, this doesn't affect the
+evaluation process of "elif". So a short-circuit evaluation is avoided.
+
+    The "#include"s are resolved in a recursive manner, as there may
+be headers included in included headers.
+    The header found in the current directory of the input file and the 
+current directory of the program have priority over the ones defined in
+the command line.
+    For this case, we redirect our input stream to the header file insead
+of our initial input stream, till we resolve the #include guard.
+
+
+[1]: http://www.cse.yorku.ca/~oz/hash.html
