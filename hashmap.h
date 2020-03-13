@@ -3,7 +3,7 @@
 typedef struct node *entry_t;
 typedef struct list_head **hash_t;
 
-#define CAPACITY 12289
+#define CAPACITY 11
 
 /*
  * Allocates, initializes and returns
@@ -27,7 +27,8 @@ int hashmap_insert(hash_t hash, const char *key, const char *value);
  * Appends 'appending_string' at the end of the value
  * found at 'hash's hashtable key
  */
-int append_value(hash_t hash, const char *key, const char *appending_string);
+int append_value(hash_t hash, const char *key,
+const char *appending_string, int first_entry);
 
 /*
  * Returns the value associated with the key

@@ -10,3 +10,5 @@ output*
 input*
 so-cpp
 *.out*
+*.gch
+*.zip

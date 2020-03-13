@@ -50,13 +50,15 @@ int resolve_includes(hash_t defines, char *header_name,
 
 int parse_define(hash_t defines, char *line, FILE *fin)
 {
-	char tmp[MAX_LINE_LEN];
-	char word[MAX_WORD_LEN];
+	char tmp[MAX_LINE_LEN] = { 0 };
+	char word[MAX_WORD_LEN] = { 0 };
+	char prev_line[MAX_LINE_LEN] = { 0 };
 	char *symbol;
 	char *mapping;
 	char *start;
 	char *end;
 	int ret;
+	int found_nested = 0, first_entry = 0;
 
 	memcpy(tmp, line, strlen(line));
 	symbol = strtok(tmp + DEFINE_OFFSET, " ");
@@ -66,10 +68,24 @@ int parse_define(hash_t defines, char *line, FILE *fin)
 	DIE(ret == FAILURE, FAILURE);
 
 	/* Manage multi-line defines */
-	while (strchr(line, '\\') != NULL) {
+	memcpy(prev_line, line, strlen(line + 1));
+
+	while (strchr(prev_line, '\\') != NULL &&
+			strstr(prev_line, "\\n") == NULL) {
 		fgets(line, MAX_LINE_LEN, fin);
-		ret = append_value(defines, symbol, line + 1);
+		memcpy(word, line, strlen(line) + 1);
+
+		line = strpbrk(line, "+-*/");
+		line = strtok(line, "\\\n");
+
+		if (strchr(word, '\\') != NULL)
+			strcat(line, " ");
+
+		ret = append_value(defines, symbol, line, first_entry);
 		DIE(ret != OK, ret);
+
+		memcpy(prev_line, word, strlen(word) + 1);
+		first_entry = 1;
 	}
 
 	start = strtok(mapping, " ");
@@ -84,19 +100,22 @@ int parse_define(hash_t defines, char *line, FILE *fin)
 		if (is_key_mapped(defines, start)) {
 			/* Found a nested mapping */
 			end = get_value(defines, start);
+			found_nested = 1;
 		}
 
-	/* Build the <MAPPING> value in "word" */
-	strcat(word, end);
-	strcat(word, " ");
+		/* Build the <MAPPING> value in "word" */
+		strcat(word, end);
+		strcat(word, " ");
 
-	start = strtok(NULL, " ");
+		start = strtok(NULL, " ");
 	}
 
 	word[strlen(word) - 1] = '\0';
 
-	ret = hashmap_insert(defines, symbol, word);
-	DIE(ret == FAILURE, FAILURE);
+	if (found_nested) {
+		ret = hashmap_insert(defines, symbol, word);
+		DIE(ret == FAILURE, FAILURE);
+	}
 
 	return OK;
 }
@@ -311,7 +330,8 @@ enum arg_type resolve_input_type(char *arg)
 	/* Input argument is stiched together with
 	 * effective value. eg: -I/some/dir
 	 */
-	if (arg[2] != 0x00 && result != BAD_PARAM && result != IN_FILE)
+	if (arg[2] != 0x00 && result != BAD_PARAM && result
+		!= IN_FILE && result != OUT_FILE)
 		result += 4;
 
 	return result;
@@ -351,7 +371,7 @@ int parse_input(int argc, char *argv[], hash_t defines, char ***header_paths,
 
 	*no_header_paths = count_include_dirs(argc, argv) + 1;
 	*header_paths = malloc(*no_header_paths * sizeof(**header_paths));
-	DIE(header_paths == NULL, FAILURE);
+	DIE(*header_paths == NULL, FAILURE);
 
 	/* Reserved for input file's directory */
 	(*header_paths)[0] = NULL;
@@ -360,7 +380,7 @@ int parse_input(int argc, char *argv[], hash_t defines, char ***header_paths,
 		arg_indicator = argv[i];
 		type = resolve_input_type(arg_indicator);
 
-		if (type == IN_FILE)
+		if (type == IN_FILE || type == OUT_FILE)
 			arg_value = arg_indicator;
 		else if (type < BAD_PARAM) {
 			++i;
@@ -414,6 +434,7 @@ int parse_input(int argc, char *argv[], hash_t defines, char ***header_paths,
 				arg_len = strlen(arg_value) + 2;
 				(*header_paths)[0] = malloc(arg_len *
 						sizeof(*((*header_paths)[0])));
+				DIE((*header_paths)[0] == NULL, FAILURE);
 
 				memcpy((*header_paths)[0], arg_value, arg_len);
 
